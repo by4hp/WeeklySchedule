@@ -4,11 +4,31 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { Task } from './models/Task.js';
 import { validateTask, validateDateRange } from './middleware/validateTask.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// 加载环境变量
+dotenv.config({ path: join(__dirname, '../../.env') });
+dotenv.config({ path: join(__dirname, '../.env') });
+
+// 打印环境变量（不包含敏感信息）
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  MONGODB_URI_SET: !!process.env.MONGODB_URI
+});
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+// 确保必要的环境变量存在
+if (!process.env.MONGODB_URI) {
+  console.error('Fatal Error: MONGODB_URI environment variable is not set');
+  process.exit(1);
+}
 
 // 中间件
 app.use(cors({
@@ -19,13 +39,17 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB连接
+console.log('Attempting to connect to MongoDB...');
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB Atlas');
     console.log('Database Name:', mongoose.connection.name);
     console.log('Database Host:', mongoose.connection.host);
   })
-  .catch((error) => console.error('Could not connect to MongoDB:', error));
+  .catch((error) => {
+    console.error('Could not connect to MongoDB:', error);
+    process.exit(1);
+  });
 
 // 健康检查端点
 app.get('/health', (req, res) => {
