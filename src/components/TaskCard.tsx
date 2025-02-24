@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { Task } from '../types';
 
@@ -25,18 +25,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
 
   // 检查内容是否超过三行
-  const checkContentHeight = () => {
+  const checkContentHeight = useCallback(() => {
     if (contentRef.current) {
-      const lineHeight = parseInt(window.getComputedStyle(contentRef.current).lineHeight);
-      const height = contentRef.current.scrollHeight;
-      const isOverThreeLines = height > lineHeight * 3;
-      setShowExpandButton(isOverThreeLines);
-      // 如果不是编辑状态且内容不超过三行，自动收起
-      if (!isEditing && !isOverThreeLines) {
-        setIsExpanded(false);
-      }
+      const scrollHeight = contentRef.current.scrollHeight;
+      const clientHeight = contentRef.current.clientHeight;
+      setShowExpandButton(scrollHeight > clientHeight);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
@@ -52,7 +47,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   useEffect(() => {
     checkContentHeight();
-  }, [checkContentHeight]);
+  }, [checkContentHeight, content]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
