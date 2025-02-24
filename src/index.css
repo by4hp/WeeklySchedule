@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义滚动条样式 */
+@layer utilities {
+  /* 滚动条整体部分 */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  /* 滚动条滑块 */
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: #D1D5DB;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+    background-color: #9CA3AF;
+  }
+
+  /* 滚动条轨道 */
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}
+
+/* 确保滚动条在需要时才显示 */
+.overflow-y-auto {
+  overflow-y: auto;
+  /* 在 Firefox 中使用细滚动条 */
+  scrollbar-width: thin;
+  /* 在 Firefox 中设置滚动条颜色 */
+  scrollbar-color: #D1D5DB transparent;
+}
+
+/* 删除动画相关样式 */
+.task-delete-enter {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+
+.task-delete-exit {
+  opacity: 0;
+  transform: scale(0) rotate(90deg);
+  transition: all 500ms ease-in-out;
+}
+
+/* 确保动画流畅 */
+* {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 任务完成动画 */
+@keyframes taskComplete {
+  0%, 100% {
+    transform: scale(1) translateX(0);
+    background: white;
+  }
+  25% {
+    transform: scale(1.05) translateX(-12px);
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+  }
+  50% {
+    transform: scale(1.05) translateX(12px);
+    background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+  }
+  75% {
+    transform: scale(1.05) translateX(-12px);
+    background: linear-gradient(45deg, #a8e6cf, #dcedc1);
+  }
+}
+
+.task-complete {
+  animation: taskComplete 1s cubic-bezier(0.36, 0, 0.66, 1);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.task-complete::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    #ff6b6b,
+    #ffd93d,
+    #4ecdc4,
+    #45b7d1,
+    #a8e6cf,
+    #dcedc1
+  );
+  background-size: 600% 100%;
+  animation: gradientMove 1s linear infinite;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 彩虹边框效果 */
+@keyframes rainbow-border {
+  0% { border-color: #ff0000; }
+  17% { border-color: #ff8000; }
+  33% { border-color: #ffff00; }
+  50% { border-color: #00ff00; }
+  67% { border-color: #0000ff; }
+  83% { border-color: #8000ff; }
+  100% { border-color: #ff0000; }
+}
+
+.rainbow-flash {
+  animation: rainbow-border 1s linear;
+  border-width: 2px;
+}
