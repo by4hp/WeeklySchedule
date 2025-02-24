@@ -112,15 +112,21 @@ app.put('/api/tasks/:id', validateTask, async (req, res) => {
 });
 
 app.delete('/api/tasks/:id', async (req, res) => {
+  console.log(`Attempting to delete task with id: ${req.params.id}`);
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
+    console.log('Delete operation result:', task);
+    
     if (!task) {
+      console.log('Task not found');
       return res.status(404).json({ error: 'Task not found' });
     }
-    res.status(204).end();
+    
+    console.log('Task deleted successfully');
+    return res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
     console.error('Error deleting task:', error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

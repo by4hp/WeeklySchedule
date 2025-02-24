@@ -88,18 +88,25 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (!response.ok && response.status !== 204) {
-        const data = await response.json();
-        throw new CustomApiError(response.status, Array.isArray(data.errors)
-          ? data.errors.join(', ')
-          : data.error || '删除任务失败');
+      const data = await response.json().catch(() => null);
+      
+      if (!response.ok) {
+        throw new CustomApiError(
+          response.status,
+          (data && (Array.isArray(data.errors) ? data.errors.join(', ') : data.error)) || '删除任务失败'
+        );
       }
     } catch (error) {
       if (error instanceof CustomApiError) {
         throw error;
       }
+      console.error('Delete task error:', error);
       throw new Error('删除任务时发生网络错误');
     }
   },
