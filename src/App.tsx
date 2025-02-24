@@ -167,35 +167,16 @@ const App: React.FC = () => {
     handleTaskMove(taskId, sourceId, destId, result.destination.index);
   }, [handleTaskMove]);
 
-  const handleTaskUpdate = useCallback(async (date: string, task: Task) => {
+  const handleTaskUpdate = useCallback(async (date: string, updatedTask: Task) => {
     try {
-      // 确保日期格式正确
-      const taskDate = dayjs(date).format('YYYY-MM-DD');
-      const updatedTask = {
-        ...task,
-        date: taskDate
-      };
-      
-      const result = await api.updateTask(task.id, updatedTask);
-      
-      setWeekData(prevWeekData => {
-        const newWeekData = { ...prevWeekData };
-        const column = newWeekData.columns.find(col => col.date === date);
-        if (column) {
-          column.tasks = column.tasks.map(t => 
-            t.id === task.id ? result : t
-          );
-        }
-        return newWeekData;
-      });
-      
+      const { id, content, completed } = updatedTask;
+      await api.updateTask(id, { content, completed });
+      fetchWeekTasks(currentDate);
       showToast('任务更新成功', 'success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '更新任务失败';
       setError(errorMessage);
-      showToast(errorMessage, 'error');
-      // 如果失败，重新获取数据以恢复正确状态
-      fetchWeekTasks(currentDate);
+      console.error('更新任务失败:', err);
     }
   }, [currentDate, fetchWeekTasks]);
 
@@ -225,11 +206,10 @@ const App: React.FC = () => {
     try {
       console.log('Creating task for date:', dayjs(date).format('YYYY-MM-DD (dddd)'));
       
-      // 创建任务时设置一个初始内容，并确保日期格式正确
-      const taskDate = dayjs(date).format('YYYY-MM-DD');
+      // 确保使用正确的日期创建任务
       const newTask = {
-        content: '新任务',
-        date: taskDate,
+        content: '',
+        date: date,
         completed: false
       };
       

@@ -1,50 +1,29 @@
 // 任务验证中间件
 export const validateTask = (req, res, next) => {
-  const { content, date } = req.body;
+  const { content, date, completed } = req.body;
 
-  if (!content || typeof content !== 'string' || content.trim().length === 0) {
-    return res.status(400).json({ error: 'Content is required and must be a non-empty string' });
-  }
-
-  // 验证日期格式 (YYYY-MM-DD)
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!date || !dateRegex.test(date)) {
-    return res.status(400).json({ error: 'Date must be in YYYY-MM-DD format' });
-  }
-
-  // 验证日期是否有效
-  const parsedDate = new Date(date);
-  if (isNaN(parsedDate.getTime())) {
-    return res.status(400).json({ error: 'Invalid date' });
-  }
+  // 只进行基本的类型转换，不做验证
+  req.body = {
+    ...req.body,
+    content: content || '',
+    completed: completed === true,
+    // 使用传入的日期，不设置默认值
+    date: date
+  };
 
   next();
 };
 
 // 验证日期范围中间件
 export const validateDateRange = (req, res, next) => {
-  const { startDate, endDate } = req.query;
+  const { start, end } = req.query;
 
-  if (!startDate || !endDate) {
-    return res.status(400).json({ error: 'Both startDate and endDate are required' });
-  }
+  // 确保日期是有效的，如果无效则使用默认值
+  const startDate = new Date(start);
+  const endDate = new Date(end);
 
-  // 验证日期格式 (YYYY-MM-DD)
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
-    return res.status(400).json({ error: 'Dates must be in YYYY-MM-DD format' });
-  }
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    return res.status(400).json({ error: 'Invalid date format' });
-  }
-
-  if (start > end) {
-    return res.status(400).json({ error: 'startDate must be before or equal to endDate' });
-  }
+  req.query.start = isNaN(startDate.getTime()) ? start : start;
+  req.query.end = isNaN(endDate.getTime()) ? end : end;
 
   next();
 };

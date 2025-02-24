@@ -13,7 +13,7 @@ export const api = {
   async fetchTasks(start: string, end: string): Promise<Task[]> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/tasks?startDate=${start}&endDate=${end}`
+        `${API_BASE_URL}/tasks?start=${start}&end=${end}`
       );
       const data = await response.json();
       

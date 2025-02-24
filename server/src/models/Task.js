@@ -3,25 +3,24 @@ import mongoose from 'mongoose';
 const taskSchema = new mongoose.Schema({
   content: {
     type: String,
-    required: true,
+    default: '',
     trim: true
-  },
-  date: {
-    type: Date,
-    required: true
   },
   completed: {
     type: Boolean,
     default: false
   },
-  createdAt: {
+  date: {
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 // 添加中间件来处理日期
 taskSchema.pre('save', function(next) {
+  // 确保日期被设置为当天的 00:00:00
   if (this.date) {
     const date = new Date(this.date);
     date.setHours(0, 0, 0, 0);
@@ -37,8 +36,9 @@ taskSchema.methods.toJSON = function() {
     id: task._id,
     content: task.content,
     completed: task.completed,
-    date: task.date,
-    createdAt: task.createdAt
+    date: task.date.toISOString(),
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt
   };
 };
 
