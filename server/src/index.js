@@ -12,8 +12,10 @@ const app = express();
 // 中间件
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL 
-    : 'http://localhost:3000'
+    ? 'https://weekly-schedule-omega.vercel.app'
+    : 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
 }));
 app.use(express.json());
 
