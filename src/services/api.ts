@@ -89,9 +89,9 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
 
       if (!response.ok) {
+        const data = await response.json();
         throw new CustomApiError(response.status, Array.isArray(data.errors)
           ? data.errors.join(', ')
           : data.error || '删除任务失败');

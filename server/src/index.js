@@ -93,9 +93,10 @@ app.delete('/api/tasks/:id', async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
-    res.status(204).send();
+    res.status(204).end();
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error deleting task:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
