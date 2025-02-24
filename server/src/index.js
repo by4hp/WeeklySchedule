@@ -35,6 +35,17 @@ console.log('Environment:', {
   CURRENT_DIR: __dirname
 });
 
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://weekly-schedule-by4hp.vercel.app',
+    /\.vercel\.app$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -45,11 +56,7 @@ if (!process.env.MONGODB_URI) {
 }
 
 // 中间件
-app.use(cors({
-  origin: ['https://weekly-schedule-omega.vercel.app', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB连接
