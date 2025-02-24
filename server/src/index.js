@@ -10,6 +10,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
+// 环境变量检查
+if (!process.env.MONGODB_URI) {
+  console.error('MONGODB_URI is not defined in environment variables');
+  process.exit(1);
+}
+
 // 中间件
 app.use(cors({
   origin: ['https://weekly-schedule-omega.vercel.app', 'http://localhost:3000'],
@@ -21,7 +27,10 @@ app.use(express.json());
 // MongoDB连接
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((error) => console.error('Could not connect to MongoDB:', error));
+  .catch((error) => {
+    console.error('Could not connect to MongoDB:', error);
+    process.exit(1);
+  });
 
 // 健康检查端点
 app.get('/health', (req, res) => {
