@@ -1,29 +1,36 @@
 // 任务验证中间件
 export const validateTask = (req, res, next) => {
-  const { content, date, completed } = req.body;
+  const { content, date } = req.body;
 
-  // 只进行基本的类型转换，不做验证
-  req.body = {
-    ...req.body,
-    content: content || '',
-    completed: completed === true,
-    // 使用传入的日期，不设置默认值
-    date: date
-  };
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    return res.status(400).json({ error: 'Content is required and must be a non-empty string' });
+  }
+
+  if (!date || isNaN(new Date(date).getTime())) {
+    return res.status(400).json({ error: 'Valid date is required' });
+  }
 
   next();
 };
 
 // 验证日期范围中间件
 export const validateDateRange = (req, res, next) => {
-  const { start, end } = req.query;
+  const { startDate, endDate } = req.query;
 
-  // 确保日期是有效的，如果无效则使用默认值
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'Both startDate and endDate are required' });
+  }
 
-  req.query.start = isNaN(startDate.getTime()) ? start : start;
-  req.query.end = isNaN(endDate.getTime()) ? end : end;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
+  if (start > end) {
+    return res.status(400).json({ error: 'startDate must be before or equal to endDate' });
+  }
 
   next();
 };
