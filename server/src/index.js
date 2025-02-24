@@ -2,14 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import taskRoutes from './routes/task.js';
 import { Task } from './models/Task.js';
 import { validateTask, validateDateRange } from './middleware/validateTask.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -24,12 +18,18 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// MongoDB连接
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((error) => console.error('Could not connect to MongoDB:', error));
+
 // 健康检查端点
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // API 路由
+// 获取任务列表
 app.get('/api/tasks', validateDateRange, async (req, res) => {
   try {
     const { start, end } = req.query;
@@ -108,11 +108,6 @@ app.delete('/api/tasks/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// MongoDB连接
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((error) => console.error('Could not connect to MongoDB:', error));
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
