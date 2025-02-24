@@ -21,7 +21,6 @@ const Column: React.FC<ColumnProps> = ({
 }) => {
   const columnDate = dayjs(date);
   const isToday = columnDate.isSame(dayjs(), 'day');
-  const isPast = columnDate.isBefore(dayjs(), 'day');
 
   const handleCreateTask = (e: React.MouseEvent<HTMLDivElement>) => {
     // 只有当点击的是任务列表区域的直接容器时才创建任务

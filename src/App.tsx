@@ -5,7 +5,6 @@ import weekOfYear from 'dayjs/plugin/weekOfYear';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import localeData from 'dayjs/plugin/localeData';
 import { WeekData, Task } from './types';
-import Board from './components/Board';
 import WeekNavigator from './components/WeekNavigator';
 import { api } from './services/api';
 import Toast from './components/Toast';
@@ -31,7 +30,6 @@ interface ToastState {
 const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [weekData, setWeekData] = useState<WeekData>({ columns: [] });
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>({
     message: '',
@@ -46,7 +44,6 @@ const App: React.FC = () => {
     const endOfWeek = date.endOf('week');
     console.log('Week ends at:', endOfWeek.format('YYYY-MM-DD (dddd)'));
     
-    setIsLoading(true);
     setError(null);
     
     try {
@@ -82,18 +79,12 @@ const App: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : '获取任务失败';
       setError(errorMessage);
       console.error('获取任务失败:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchWeekTasks(currentDate);
   }, [currentDate, fetchWeekTasks]);
-
-  const handleDateChange = (newDate: dayjs.Dayjs) => {
-    setCurrentDate(newDate);
-  };
 
   const handleTaskMove = useCallback(async (taskId: string, fromDate: string, toDate: string, toIndex: number) => {
     try {

@@ -48,8 +48,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   useEffect(() => {
     setContent(task.content);
-    checkContentHeight();
   }, [task.content]);
+
+  useEffect(() => {
+    checkContentHeight();
+  }, [checkContentHeight]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;

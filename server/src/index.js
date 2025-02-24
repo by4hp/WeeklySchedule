@@ -10,7 +10,11 @@ dotenv.config();
 const app = express();
 
 // 中间件
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : 'http://localhost:3000'
+}));
 app.use(express.json());
 
 // MongoDB Atlas 连接
@@ -25,6 +29,11 @@ const connectDB = async () => {
 };
 
 connectDB();
+
+// 健康检查端点
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // API 路由
 app.get('/api/tasks', validateDateRange, async (req, res) => {
