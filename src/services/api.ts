@@ -90,7 +90,7 @@ export const api = {
         method: 'DELETE',
       });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 204) {
         const data = await response.json();
         throw new CustomApiError(response.status, Array.isArray(data.errors)
           ? data.errors.join(', ')
