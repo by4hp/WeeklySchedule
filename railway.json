@@ -5,7 +5,7 @@
     "buildCommand": "cd server && npm install --omit=dev"
   },
   "deploy": {
-    "startCommand": "cd server && cp .env.production .env && npm start",
+    "startCommand": "cd server && NODE_ENV=production node src/index.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "envVars": {

@@ -11,14 +11,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 加载环境变量
-dotenv.config({ path: join(__dirname, '../../.env') });
-dotenv.config({ path: join(__dirname, '../.env') });
+const envFiles = [
+  join(__dirname, '../.env'),
+  join(__dirname, '../.env.production')
+];
+
+envFiles.forEach(file => {
+  console.log(`Attempting to load env file: ${file}`);
+  const result = dotenv.config({ path: file });
+  if (result.error) {
+    console.log(`Could not load ${file}:`, result.error.message);
+  } else {
+    console.log(`Successfully loaded ${file}`);
+  }
+});
 
 // 打印环境变量（不包含敏感信息）
 console.log('Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
-  MONGODB_URI_SET: !!process.env.MONGODB_URI
+  MONGODB_URI_SET: !!process.env.MONGODB_URI,
+  PWD: process.env.PWD,
+  CURRENT_DIR: __dirname
 });
 
 const app = express();
