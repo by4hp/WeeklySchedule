@@ -2,19 +2,19 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import taskRoutes from './routes/task.js';
 import { Task } from './models/Task.js';
 import { validateTask, validateDateRange } from './middleware/validateTask.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-
-// 环境变量检查
-if (!process.env.MONGODB_URI) {
-  console.error('MONGODB_URI is not defined in environment variables');
-  process.exit(1);
-}
 
 // 中间件
 app.use(cors({
@@ -24,23 +24,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB连接
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((error) => {
-    console.error('Could not connect to MongoDB:', error);
-    process.exit(1);
-  });
-
 // 健康检查端点
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // API 路由
-// 获取任务列表
 app.get('/api/tasks', validateDateRange, async (req, res) => {
   try {
+    console.log('Fetching tasks...');
     const { start, end } = req.query;
     // 设置查询日期为当天的开始和结束时间
     const startDate = new Date(start);
@@ -48,14 +40,19 @@ app.get('/api/tasks', validateDateRange, async (req, res) => {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    const tasks = await Task.find({
+    console.log('Date range:', { start, end });
+    const query = {
       date: {
         $gte: startDate,
         $lte: endDate
       }
-    }).sort({ date: 1 });
+    };
+    console.log('MongoDB Query:', JSON.stringify(query));
+    const tasks = await Task.find(query).sort({ date: 1 });
+    console.log('Found tasks:', tasks.length);
     res.json(tasks);
   } catch (error) {
+    console.error('Error fetching tasks:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -117,6 +114,15 @@ app.delete('/api/tasks/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// MongoDB连接
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB Atlas');
+    console.log('Database Name:', mongoose.connection.name);
+    console.log('Database Host:', mongoose.connection.host);
+  })
+  .catch((error) => console.error('Could not connect to MongoDB:', error));
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
