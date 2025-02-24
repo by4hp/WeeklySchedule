@@ -123,7 +123,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
     }
     
     console.log('Task deleted successfully');
-    return res.status(200).json({ message: 'Task deleted successfully' });
+    return res.status(204).end();
   } catch (error) {
     console.error('Error deleting task:', error);
     return res.status(500).json({ error: error.message });

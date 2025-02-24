@@ -94,14 +94,17 @@ export const api = {
         },
       });
 
-      const data = await response.json().catch(() => null);
-      
-      if (!response.ok) {
-        throw new CustomApiError(
-          response.status,
-          (data && (Array.isArray(data.errors) ? data.errors.join(', ') : data.error)) || '删除任务失败'
-        );
+      // 不管响应内容如何，只要状态码在 200-299 范围内就认为是成功
+      if (response.ok) {
+        return;
       }
+
+      // 只有在响应不成功时才尝试解析错误信息
+      const data = await response.json().catch(() => ({ error: '删除任务失败' }));
+      throw new CustomApiError(
+        response.status,
+        (data && (Array.isArray(data.errors) ? data.errors.join(', ') : data.error)) || '删除任务失败'
+      );
     } catch (error) {
       if (error instanceof CustomApiError) {
         throw error;
