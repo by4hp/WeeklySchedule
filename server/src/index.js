@@ -81,14 +81,13 @@ app.get('/health', (req, res) => {
 app.get('/api/tasks', validateDateRange, async (req, res) => {
   try {
     console.log('Fetching tasks...');
-    const { start, end } = req.query;
-    // 设置查询日期为当天的开始和结束时间
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
+    const { startDate, endDate } = req.query;
 
-    console.log('Date range:', { start, end });
+    console.log('Date range:', { 
+      startDate: startDate.toISOString(), 
+      endDate: endDate.toISOString() 
+    });
+
     const query = {
       date: {
         $gte: startDate,

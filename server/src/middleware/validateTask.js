@@ -2,13 +2,17 @@
 export const validateTask = (req, res, next) => {
   const { content, date, completed } = req.body;
 
-  // 只进行基本的类型转换，不做验证
+  // 验证日期
+  const taskDate = new Date(date);
+  if (isNaN(taskDate.getTime())) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
   req.body = {
     ...req.body,
     content: content || '',
     completed: completed === true,
-    // 使用传入的日期，不设置默认值
-    date: date
+    date: taskDate
   };
 
   next();
@@ -18,12 +22,23 @@ export const validateTask = (req, res, next) => {
 export const validateDateRange = (req, res, next) => {
   const { start, end } = req.query;
 
-  // 确保日期是有效的，如果无效则使用默认值
+  if (!start || !end) {
+    return res.status(400).json({ error: 'Start and end dates are required' });
+  }
+
   const startDate = new Date(start);
   const endDate = new Date(end);
 
-  req.query.start = isNaN(startDate.getTime()) ? start : start;
-  req.query.end = isNaN(endDate.getTime()) ? end : end;
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
+  // 设置时间范围
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
+  req.query.startDate = startDate;
+  req.query.endDate = endDate;
 
   next();
 };
