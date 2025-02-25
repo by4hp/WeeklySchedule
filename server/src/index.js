@@ -41,7 +41,9 @@ const corsOptions = {
     'http://localhost:3000',
     'https://weekly-schedule-client.vercel.app',
     'https://weekly-schedule-client-by4hp.vercel.app',
-    'https://weekly-schedule-omega.vercel.app'
+    'https://weekly-schedule-omega.vercel.app',
+    'https://weekly-schedule.vercel.app',
+    /\.vercel\.app$/  // 允许所有 vercel.app 子域名
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
