@@ -108,17 +108,15 @@ export const api = {
 
 // 添加乐观更新工具函数
 export const optimisticApi = {
-  createTask: async (
+  async createTask(
     task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>,
     onOptimisticUpdate: (optimisticTask: Task) => void,
     onRollback: () => void
-  ): Promise<Task> => {
-    // 创建乐观更新的临时任务
-    const optimisticTask: Task = {
-      id: `temp_${Date.now()}`,
-      content: task.content,
-      completed: task.completed || false,
-      date: task.date,
+  ): Promise<Task> {
+    const tempId = `temp_${Date.now()}`;
+    const optimisticTask = {
+      ...task,
+      id: tempId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -127,7 +125,7 @@ export const optimisticApi = {
     onOptimisticUpdate(optimisticTask);
 
     try {
-      // 实际发送请求
+      // 发送实际请求
       const createdTask = await api.createTask(task);
       return createdTask;
     } catch (error) {

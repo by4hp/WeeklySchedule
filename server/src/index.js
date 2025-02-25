@@ -156,10 +156,16 @@ app.get('/api/tasks', validateDateRange, async (req, res) => {
 
 app.post('/api/tasks', validateTask, async (req, res) => {
   try {
+    // 如果请求体中包含 id 且是临时 id，删除它
+    if (req.body.id && req.body.id.startsWith('temp_')) {
+      delete req.body.id;
+    }
+    
     const task = new Task(req.body);
     await task.save();
     res.status(201).json(task);
   } catch (error) {
+    console.error('Error creating task:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -168,6 +174,8 @@ app.put('/api/tasks/:id', validateTask, async (req, res) => {
   try {
     // 如果是临时ID，创建新任务
     if (req.params.id.startsWith('temp_')) {
+      // 确保删除临时 id
+      delete req.body.id;
       const task = new Task(req.body);
       await task.save();
       return res.status(201).json(task);
@@ -184,6 +192,7 @@ app.put('/api/tasks/:id', validateTask, async (req, res) => {
     }
     res.json(task);
   } catch (error) {
+    console.error('Error updating task:', error);
     res.status(400).json({ error: error.message });
   }
 });
