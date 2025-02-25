@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { Task } from './models/Task.js';
@@ -35,46 +34,9 @@ console.log('Environment:', {
   CURRENT_DIR: __dirname
 });
 
-// CORS 配置
-const corsOptions = {
-  origin: function(origin, callback) {
-    // 允许所有 vercel.app 子域名和本地开发
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'https://weekly-schedule-client.vercel.app',
-      'https://weekly-schedule-client-by4hp.vercel.app',
-      'https://weekly-schedule-omega.vercel.app',
-      'https://weekly-schedule.vercel.app'
-    ];
-    
-    // 允许没有 origin 的请求（比如来自 Postman 的请求）
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    // 检查是否是 vercel.app 域名或在允许列表中
-    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
 const app = express();
-const port = process.env.PORT || 3001;
 
-// 确保必要的环境变量存在
-if (!process.env.MONGODB_URI) {
-  console.error('Fatal Error: MONGODB_URI environment variable is not set');
-  process.exit(1);
-}
-
-// 在所有路由之前设置 CORS 头
+// 自定义 CORS 中间件
 app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
@@ -85,16 +47,16 @@ app.use((req, res, next) => {
   ];
 
   const origin = req.headers.origin;
-  if (origin) {
-    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
+  
+  // 允许来自 vercel.app 域名的请求
+  if (origin && (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
+  // 处理预检请求
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -104,9 +66,6 @@ app.use((req, res, next) => {
 
 // 使用 express.json() 中间件
 app.use(express.json());
-
-// 中间件
-app.use(cors(corsOptions));
 
 // MongoDB连接
 console.log('Attempting to connect to MongoDB...');
@@ -221,6 +180,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
+const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
