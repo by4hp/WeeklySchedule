@@ -121,12 +121,17 @@ export const optimisticApi = {
       updatedAt: new Date().toISOString()
     };
 
-    // 立即更新 UI
-    onOptimisticUpdate(optimisticTask);
-
     try {
+      // 立即更新 UI
+      onOptimisticUpdate(optimisticTask);
+
       // 发送实际请求
-      const createdTask = await api.createTask(task);
+      const createdTask = await api.createTask({
+        content: task.content,
+        date: task.date,
+        completed: task.completed || false
+      });
+
       return createdTask;
     } catch (error) {
       // 如果失败，回滚 UI

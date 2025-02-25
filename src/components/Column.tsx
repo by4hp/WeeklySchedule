@@ -23,6 +23,8 @@ const Column: React.FC<ColumnProps> = ({
   const isToday = columnDate.isSame(dayjs(), 'day');
 
   const handleCreateTask = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 防止事件冒泡
+    e.stopPropagation();
     // 只有当点击的是任务列表区域的直接容器时才创建任务
     if (e.currentTarget === e.target) {
       onTaskCreate(date);
@@ -46,7 +48,7 @@ const Column: React.FC<ColumnProps> = ({
       {/* 任务列表区域 - 可滚动 */}
       <div 
         className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400"
-        onDoubleClick={handleCreateTask}
+        onClick={handleCreateTask}
       >
         <div className="p-2 space-y-2">
           {tasks.map((task, index) => (
