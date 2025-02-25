@@ -167,22 +167,36 @@ const App: React.FC = () => {
     handleTaskMove(taskId, sourceId, destId, result.destination.index);
   }, [handleTaskMove]);
 
-  const handleTaskUpdate = useCallback(async (date: string, updatedTask: Task) => {
+  const handleTaskUpdate = useCallback(async (date: string, task: Task) => {
+    const originalWeekData = weekData;
     try {
-      const { id, content, completed } = updatedTask;
-      await api.updateTask(id, { content, completed });
+      const currentTask = task;
+      const update = {
+        content: task.content,
+        completed: task.completed,
+        date: task.date
+      };
+
+      await api.updateTask(
+        task.id,
+        update
+      );
       fetchWeekTasks(currentDate);
       showToast('任务更新成功', 'success');
     } catch (err) {
+      setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '更新任务失败';
       setError(errorMessage);
-      console.error('更新任务失败:', err);
+      showToast(errorMessage, 'error');
     }
-  }, [currentDate, fetchWeekTasks]);
+  }, [weekData, currentDate, fetchWeekTasks]);
 
   const handleTaskDelete = useCallback(async (date: string, taskId: string) => {
+    const originalWeekData = weekData;
     try {
-      await api.deleteTask(taskId);
+      await api.deleteTask(
+        taskId
+      );
       
       // 从所有列中删除任务，而不仅仅是指定日期的列
       setWeekData(prevWeekData => {
@@ -196,17 +210,18 @@ const App: React.FC = () => {
       
       showToast('任务删除成功', 'success');
     } catch (err) {
+      setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '删除任务失败';
       setError(errorMessage);
-      console.error('删除任务失败:', err);
+      showToast(errorMessage, 'error');
     }
-  }, []);
+  }, [weekData]);
 
   const handleTaskCreate = useCallback(async (date: string) => {
+    const originalWeekData = weekData;
     try {
       console.log('Creating task for date:', dayjs(date).format('YYYY-MM-DD (dddd)'));
       
-      // 确保使用正确的日期创建任务
       const newTask = {
         content: '',
         date: date,
@@ -232,11 +247,12 @@ const App: React.FC = () => {
       
       showToast('任务创建成功', 'success');
     } catch (err) {
+      setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '创建任务失败';
       setError(errorMessage);
       showToast(errorMessage, 'error');
     }
-  }, []);
+  }, [weekData]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToast({ message, type, show: true });
