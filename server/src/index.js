@@ -166,6 +166,14 @@ app.post('/api/tasks', validateTask, async (req, res) => {
 
 app.put('/api/tasks/:id', validateTask, async (req, res) => {
   try {
+    // 如果是临时ID，创建新任务
+    if (req.params.id.startsWith('temp_')) {
+      const task = new Task(req.body);
+      await task.save();
+      return res.status(201).json(task);
+    }
+
+    // 否则更新现有任务
     const task = await Task.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -183,6 +191,11 @@ app.put('/api/tasks/:id', validateTask, async (req, res) => {
 app.delete('/api/tasks/:id', async (req, res) => {
   console.log(`Attempting to delete task with id: ${req.params.id}`);
   try {
+    // 如果是临时ID，直接返回成功
+    if (req.params.id.startsWith('temp_')) {
+      return res.status(204).end();
+    }
+
     const task = await Task.findByIdAndDelete(req.params.id);
     console.log('Delete operation result:', task);
     
