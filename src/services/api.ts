@@ -20,15 +20,14 @@ export const api = {
       if (!response.ok) {
         throw new CustomApiError(response.status, Array.isArray(data.errors) 
           ? data.errors.join(', ') 
-          : data.error || '获取任务失败');
+          : data.error || 'Failed to fetch tasks'
+        );
       }
       
       return data;
     } catch (error) {
-      if (error instanceof CustomApiError) {
-        throw error;
-      }
-      throw new Error('获取任务时发生网络错误');
+      console.error('Error fetching tasks:', error);
+      throw error;
     }
   },
 
@@ -41,46 +40,49 @@ export const api = {
         },
         body: JSON.stringify(task),
       });
+      
       const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new CustomApiError(response.status, Array.isArray(data.errors)
-          ? data.errors.join(', ')
-          : data.error || '创建任务失败');
+        throw new CustomApiError(response.status, Array.isArray(data.errors) 
+          ? data.errors.join(', ') 
+          : data.error || 'Failed to create task'
+        );
       }
-
+      
       return data;
     } catch (error) {
-      if (error instanceof CustomApiError) {
-        throw error;
-      }
-      throw new Error('创建任务时发生网络错误');
+      console.error('Error creating task:', error);
+      throw error;
     }
   },
 
-  async updateTask(id: string, task: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Task> {
+  async updateTask(
+    id: string, 
+    task: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<Task> {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(task),
       });
+      
       const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new CustomApiError(response.status, Array.isArray(data.errors)
-          ? data.errors.join(', ')
-          : data.error || '更新任务失败');
+        throw new CustomApiError(response.status, Array.isArray(data.errors) 
+          ? data.errors.join(', ') 
+          : data.error || 'Failed to update task'
+        );
       }
-
+      
       return data;
     } catch (error) {
-      if (error instanceof CustomApiError) {
-        throw error;
-      }
-      throw new Error('更新任务时发生网络错误');
+      console.error('Error updating task:', error);
+      throw error;
     }
   },
 
@@ -88,29 +90,96 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
       });
-
-      // 不管响应内容如何，只要状态码在 200-299 范围内就认为是成功
-      if (response.ok) {
-        return;
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new CustomApiError(response.status, Array.isArray(data.errors) 
+          ? data.errors.join(', ') 
+          : data.error || 'Failed to delete task'
+        );
       }
-
-      // 只有在响应不成功时才尝试解析错误信息
-      const data = await response.json().catch(() => ({ error: '删除任务失败' }));
-      throw new CustomApiError(
-        response.status,
-        (data && (Array.isArray(data.errors) ? data.errors.join(', ') : data.error)) || '删除任务失败'
-      );
     } catch (error) {
-      if (error instanceof CustomApiError) {
-        throw error;
-      }
-      console.error('Delete task error:', error);
-      throw new Error('删除任务时发生网络错误');
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  }
+};
+
+// 添加乐观更新工具函数
+export const optimisticApi = {
+  createTask: async (
+    task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>,
+    onOptimisticUpdate: (optimisticTask: Task) => void,
+    onRollback: () => void
+  ): Promise<Task> => {
+    // 创建乐观更新的临时任务
+    const optimisticTask: Task = {
+      id: `temp_${Date.now()}`,
+      content: task.content,
+      completed: task.completed || false,
+      date: task.date,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // 立即更新 UI
+    onOptimisticUpdate(optimisticTask);
+
+    try {
+      // 实际发送请求
+      const createdTask = await api.createTask(task);
+      return createdTask;
+    } catch (error) {
+      // 如果失败，回滚 UI
+      onRollback();
+      throw error;
     }
   },
+
+  updateTask: async (
+    id: string,
+    update: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>,
+    currentTask: Task,
+    onOptimisticUpdate: (optimisticTask: Task) => void,
+    onRollback: () => void
+  ): Promise<Task> => {
+    // 创建乐观更新的任务
+    const optimisticTask: Task = {
+      ...currentTask,
+      ...update,
+      updatedAt: new Date().toISOString()
+    };
+
+    // 立即更新 UI
+    onOptimisticUpdate(optimisticTask);
+
+    try {
+      // 实际发送请求
+      const updatedTask = await api.updateTask(id, update);
+      return updatedTask;
+    } catch (error) {
+      // 如果失败，回滚 UI
+      onRollback();
+      throw error;
+    }
+  },
+
+  deleteTask: async (
+    id: string,
+    onOptimisticUpdate: () => void,
+    onRollback: () => void
+  ): Promise<void> => {
+    // 立即更新 UI
+    onOptimisticUpdate();
+
+    try {
+      // 实际发送请求
+      await api.deleteTask(id);
+    } catch (error) {
+      // 如果失败，回滚 UI
+      onRollback();
+      throw error;
+    }
+  }
 };
