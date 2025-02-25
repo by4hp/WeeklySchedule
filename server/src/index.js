@@ -40,7 +40,8 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'https://weekly-schedule-client.vercel.app',
-    'https://weekly-schedule-client-by4hp.vercel.app'
+    'https://weekly-schedule-client-by4hp.vercel.app',
+    'https://weekly-schedule-omega.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
