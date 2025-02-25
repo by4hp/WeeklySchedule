@@ -177,7 +177,7 @@ const App: React.FC = () => {
         date: task.date
       };
 
-      await optimisticApi.updateTask(
+      const updatedTask = await optimisticApi.updateTask(
         task.id,
         update,
         currentTask,
@@ -193,7 +193,6 @@ const App: React.FC = () => {
             }
             return newWeekData;
           });
-          showToast('任务更新成功', 'success');
         },
         () => {
           // 如果失败，回滚到原始状态
@@ -203,6 +202,19 @@ const App: React.FC = () => {
           showToast(errorMessage, 'error');
         }
       );
+
+      // 服务器请求成功后，确保使用服务器返回的最新数据
+      setWeekData(prevWeekData => {
+        const newWeekData = { ...prevWeekData };
+        const column = newWeekData.columns.find(col => col.date === date);
+        if (column) {
+          column.tasks = column.tasks.map(t => 
+            t.id === updatedTask.id ? updatedTask : t
+          );
+        }
+        return newWeekData;
+      });
+      showToast('任务更新成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '更新任务失败';
@@ -227,7 +239,6 @@ const App: React.FC = () => {
             }));
             return newWeekData;
           });
-          showToast('任务删除成功', 'success');
         },
         () => {
           // 如果失败，回滚到原始状态
@@ -237,6 +248,7 @@ const App: React.FC = () => {
           showToast(errorMessage, 'error');
         }
       );
+      showToast('任务删除成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '删除任务失败';
@@ -256,23 +268,39 @@ const App: React.FC = () => {
         completed: false
       };
       
-      const createdTask = await api.createTask(newTask);
-      console.log('Created task with date:', dayjs(createdTask.date).format('YYYY-MM-DD (dddd)'));
-      
-      // 更新本地状态
+      const createdTask = await optimisticApi.createTask(
+        newTask,
+        (optimisticTask) => {
+          // 立即更新UI
+          setWeekData(prevWeekData => {
+            const newWeekData = { ...prevWeekData };
+            const column = newWeekData.columns.find(col => col.date === date);
+            if (column) {
+              column.tasks = [...column.tasks, optimisticTask];
+            }
+            return newWeekData;
+          });
+        },
+        () => {
+          // 如果失败，回滚到原始状态
+          setWeekData(originalWeekData);
+          const errorMessage = '创建任务失败';
+          setError(errorMessage);
+          showToast(errorMessage, 'error');
+        }
+      );
+
+      // 服务器请求成功后，用实际的任务ID替换临时ID
       setWeekData(prevWeekData => {
         const newWeekData = { ...prevWeekData };
         const column = newWeekData.columns.find(col => col.date === date);
         if (column) {
-          // 检查任务是否已存在
-          const taskExists = column.tasks.some(task => task.id === createdTask.id);
-          if (!taskExists) {
-            column.tasks = [...column.tasks, createdTask];
-          }
+          column.tasks = column.tasks.map(task => 
+            task.id.startsWith('temp_') ? createdTask : task
+          );
         }
         return newWeekData;
       });
-      
       showToast('任务创建成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
