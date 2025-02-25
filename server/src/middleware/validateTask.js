@@ -2,19 +2,31 @@
 export const validateTask = (req, res, next) => {
   const { content, date, completed } = req.body;
 
-  // 验证日期
-  const taskDate = new Date(date);
-  if (isNaN(taskDate.getTime())) {
-    return res.status(400).json({ error: 'Invalid date format' });
-  }
-
-  req.body = {
-    ...req.body,
-    content: content || '',
-    completed: completed === true,
-    date: taskDate
+  // 构建更新对象
+  const updateData = {
+    ...req.body
   };
 
+  // 设置内容（如果提供）
+  if (content !== undefined) {
+    updateData.content = content || '';
+  }
+
+  // 设置完成状态（如果提供）
+  if (completed !== undefined) {
+    updateData.completed = completed === true;
+  }
+
+  // 验证并设置日期（如果提供）
+  if (date !== undefined) {
+    const taskDate = new Date(date);
+    if (isNaN(taskDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    updateData.date = taskDate;
+  }
+
+  req.body = updateData;
   next();
 };
 
