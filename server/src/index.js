@@ -77,7 +77,15 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // 健康检查端点
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const now = new Date();
+  res.json({ 
+    status: 'ok', 
+    timestamp: now.toISOString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    localTime: now.toString(),
+    utcTime: now.toUTCString(),
+    env: process.env.NODE_ENV
+  });
 });
 
 // API 路由
