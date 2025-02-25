@@ -1,3 +1,10 @@
+// 日期处理工具函数
+const parseAndValidateDate = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 // 任务验证中间件
 export const validateTask = (req, res, next) => {
   const { content, date, completed } = req.body;
@@ -19,8 +26,8 @@ export const validateTask = (req, res, next) => {
 
   // 验证并设置日期（如果提供）
   if (date !== undefined) {
-    const taskDate = new Date(date);
-    if (isNaN(taskDate.getTime())) {
+    const taskDate = parseAndValidateDate(date);
+    if (!taskDate) {
       return res.status(400).json({ error: 'Invalid date format' });
     }
     updateData.date = taskDate;
@@ -38,10 +45,10 @@ export const validateDateRange = (req, res, next) => {
     return res.status(400).json({ error: 'Start and end dates are required' });
   }
 
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  const startDate = parseAndValidateDate(start);
+  const endDate = parseAndValidateDate(end);
 
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+  if (!startDate || !endDate) {
     return res.status(400).json({ error: 'Invalid date format' });
   }
 

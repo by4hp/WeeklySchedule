@@ -35,15 +35,17 @@ console.log('Environment:', {
   CURRENT_DIR: __dirname
 });
 
+// CORS 配置
 const corsOptions = {
   origin: [
     'http://localhost:3000',
-    'https://weekly-schedule-by4hp.vercel.app',
-    /\.vercel\.app$/
+    'https://weekly-schedule-client.vercel.app',
+    'https://weekly-schedule-client-by4hp.vercel.app'
   ],
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
 };
 
 const app = express();
