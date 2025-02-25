@@ -113,6 +113,10 @@ export const optimisticApi = {
     onOptimisticUpdate: (optimisticTask: Task) => void,
     onRollback: () => void
   ): Promise<Task> {
+    console.log('optimisticApi.createTask called', {
+      task
+    });
+    
     const tempId = `temp_${Date.now()}`;
     const optimisticTask = {
       ...task,
@@ -121,9 +125,17 @@ export const optimisticApi = {
       updatedAt: new Date().toISOString()
     };
 
+    console.log('Created optimistic task', {
+      optimisticTask
+    });
+
     try {
       // 立即更新 UI
       onOptimisticUpdate(optimisticTask);
+
+      console.log('Sending API request to create task', {
+        task
+      });
 
       // 发送实际请求
       const createdTask = await api.createTask({
@@ -132,8 +144,17 @@ export const optimisticApi = {
         completed: task.completed || false
       });
 
+      console.log('Task created successfully via API', {
+        createdTask
+      });
+
       return createdTask;
     } catch (error) {
+      console.error('Error creating task', {
+        error,
+        task
+      });
+      
       // 如果失败，回滚 UI
       onRollback();
       throw error;

@@ -23,6 +23,12 @@ const Column: React.FC<ColumnProps> = ({
   const isToday = columnDate.isSame(dayjs(), 'day');
 
   const handleCreateTask = (e: React.MouseEvent<HTMLDivElement>) => {
+    console.log('Column handleCreateTask called', {
+      currentTarget: e.currentTarget,
+      target: e.target,
+      isMatch: e.currentTarget === e.target,
+      date
+    });
     // 防止事件冒泡
     e.stopPropagation();
     // 只有当点击的是任务列表区域的直接容器时才创建任务

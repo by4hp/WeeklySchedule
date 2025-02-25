@@ -258,6 +258,11 @@ const App: React.FC = () => {
   }, [weekData]);
 
   const handleTaskCreate = useCallback(async (date: string) => {
+    console.log('App handleTaskCreate called', {
+      date,
+      currentWeekData: weekData
+    });
+    
     const originalWeekData = weekData;
     try {
       console.log('Creating task for date:', dayjs(date).format('YYYY-MM-DD (dddd)'));
@@ -268,15 +273,33 @@ const App: React.FC = () => {
         completed: false
       };
       
+      let tempTaskId: string | null = null;
+      
       const createdTask = await optimisticApi.createTask(
         newTask,
         (optimisticTask) => {
+          console.log('Optimistic update callback called', {
+            optimisticTask,
+            date
+          });
+          
+          tempTaskId = optimisticTask.id;
+          
           // 立即更新UI
           setWeekData(prevWeekData => {
+            console.log('setWeekData callback', {
+              prevWeekData,
+              optimisticTask,
+              date
+            });
+            
             const newWeekData = { ...prevWeekData };
             const column = newWeekData.columns.find(col => col.date === date);
             if (column) {
-              column.tasks = [...column.tasks, optimisticTask];
+              // 确保不重复添加任务
+              if (!column.tasks.some(task => task.id === optimisticTask.id)) {
+                column.tasks = [...column.tasks, optimisticTask];
+              }
             }
             return newWeekData;
           });
@@ -290,17 +313,34 @@ const App: React.FC = () => {
         }
       );
 
-      // 服务器请求成功后，用实际的任务ID替换临时ID
-      setWeekData(prevWeekData => {
-        const newWeekData = { ...prevWeekData };
-        const column = newWeekData.columns.find(col => col.date === date);
-        if (column) {
-          column.tasks = column.tasks.map(task => 
-            task.id.startsWith('temp_') ? createdTask : task
-          );
-        }
-        return newWeekData;
+      console.log('Task created successfully', {
+        createdTask,
+        date,
+        tempTaskId
       });
+
+      if (tempTaskId) {
+        // 服务器请求成功后，用实际的任务ID替换临时ID
+        setWeekData(prevWeekData => {
+          console.log('Replacing temp ID with actual ID', {
+            prevWeekData,
+            createdTask,
+            date,
+            tempTaskId
+          });
+          
+          const newWeekData = { ...prevWeekData };
+          const column = newWeekData.columns.find(col => col.date === date);
+          if (column) {
+            // 确保只替换对应的临时任务
+            column.tasks = column.tasks.map(task => 
+              task.id === tempTaskId ? createdTask : task
+            );
+          }
+          return newWeekData;
+        });
+      }
+      
       showToast('任务创建成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
