@@ -6,7 +6,7 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import localeData from 'dayjs/plugin/localeData';
 import { WeekData, Task } from './types';
 import WeekNavigator from './components/WeekNavigator';
-import { api } from './services/api';
+import { api, optimisticApi } from './services/api';
 import Toast from './components/Toast';
 import Column from './components/Column';
 
@@ -177,38 +177,66 @@ const App: React.FC = () => {
         date: task.date
       };
 
-      await api.updateTask(
+      await optimisticApi.updateTask(
         task.id,
-        update
+        update,
+        currentTask,
+        (optimisticTask) => {
+          // 立即更新UI
+          setWeekData(prevWeekData => {
+            const newWeekData = { ...prevWeekData };
+            const column = newWeekData.columns.find(col => col.date === date);
+            if (column) {
+              column.tasks = column.tasks.map(t => 
+                t.id === optimisticTask.id ? optimisticTask : t
+              );
+            }
+            return newWeekData;
+          });
+          showToast('任务更新成功', 'success');
+        },
+        () => {
+          // 如果失败，回滚到原始状态
+          setWeekData(originalWeekData);
+          const errorMessage = '更新任务失败';
+          setError(errorMessage);
+          showToast(errorMessage, 'error');
+        }
       );
-      fetchWeekTasks(currentDate);
-      showToast('任务更新成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '更新任务失败';
       setError(errorMessage);
       showToast(errorMessage, 'error');
     }
-  }, [weekData, currentDate, fetchWeekTasks]);
+  }, [weekData]);
 
   const handleTaskDelete = useCallback(async (date: string, taskId: string) => {
     const originalWeekData = weekData;
     try {
-      await api.deleteTask(
-        taskId
+      await optimisticApi.deleteTask(
+        taskId,
+        () => {
+          // 立即更新UI
+          setWeekData(prevWeekData => {
+            const newWeekData = { ...prevWeekData };
+            // 从所有列中删除任务，而不仅仅是指定日期的列
+            newWeekData.columns = newWeekData.columns.map(column => ({
+              ...column,
+              tasks: column.tasks.filter(task => task.id !== taskId)
+            }));
+            return newWeekData;
+          });
+          showToast('任务删除成功', 'success');
+        },
+        () => {
+          // 如果失败，回滚到原始状态
+          setWeekData(originalWeekData);
+          const errorMessage = '删除任务失败';
+          setError(errorMessage);
+          showToast(errorMessage, 'error');
+        }
       );
-      
-      // 从所有列中删除任务，而不仅仅是指定日期的列
-      setWeekData(prevWeekData => {
-        const newWeekData = { ...prevWeekData };
-        newWeekData.columns = newWeekData.columns.map(column => ({
-          ...column,
-          tasks: column.tasks.filter(task => task.id !== taskId)
-        }));
-        return newWeekData;
-      });
-      
-      showToast('任务删除成功', 'success');
     } catch (err) {
       setWeekData(originalWeekData);
       const errorMessage = err instanceof Error ? err.message : '删除任务失败';
