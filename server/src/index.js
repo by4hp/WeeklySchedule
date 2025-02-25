@@ -37,14 +37,28 @@ console.log('Environment:', {
 
 // CORS 配置
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'https://weekly-schedule-client.vercel.app',
-    'https://weekly-schedule-client-by4hp.vercel.app',
-    'https://weekly-schedule-omega.vercel.app',
-    'https://weekly-schedule.vercel.app',
-    /\.vercel\.app$/  // 允许所有 vercel.app 子域名
-  ],
+  origin: function(origin, callback) {
+    // 允许所有 vercel.app 子域名和本地开发
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://weekly-schedule-client.vercel.app',
+      'https://weekly-schedule-client-by4hp.vercel.app',
+      'https://weekly-schedule-omega.vercel.app',
+      'https://weekly-schedule.vercel.app'
+    ];
+    
+    // 允许没有 origin 的请求（比如来自 Postman 的请求）
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // 检查是否是 vercel.app 域名或在允许列表中
+    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -60,9 +74,39 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
+// 在所有路由之前设置 CORS 头
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://weekly-schedule-client.vercel.app',
+    'https://weekly-schedule-client-by4hp.vercel.app',
+    'https://weekly-schedule-omega.vercel.app',
+    'https://weekly-schedule.vercel.app'
+  ];
+
+  const origin = req.headers.origin;
+  if (origin) {
+    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
+
+// 使用 express.json() 中间件
+app.use(express.json());
+
 // 中间件
 app.use(cors(corsOptions));
-app.use(express.json());
 
 // MongoDB连接
 console.log('Attempting to connect to MongoDB...');
